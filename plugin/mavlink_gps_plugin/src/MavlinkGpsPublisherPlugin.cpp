@@ -13,26 +13,27 @@ void MavlinkGpsPublisherPlugin::Configure(
     gz::sim::EntityComponentManager &ecm,
     gz::sim::EventManager &eventMgr)
 {
-    // gzmsg << "[MavlinkGpsPublisherPlugin] Configure started." << std::endl;
-    std::cout << "[MavlinkGpsPublisherPlugin] Configure started." << std::endl;
+    _port = std::make_unique<Udp>(local_port, ip, remote_port);
+    _port->openPort();
 
-    // this->model_ = Model(entity);
-    // this->stand_link_entity_ = this->model_.LinkByName(ecm, "stand_link");
+    if (!_port->isOpenPort()) {
+        std::cerr << "Failed to open MAVLink sender port" << std::endl;
+    }
 
-    this->node_.Subscribe("/stand/gps", &MavlinkGpsPublisherPlugin::gpsCallback, this);
-    this->node_.Subscribe("/model/stand/pose", &MavlinkGpsPublisherPlugin::poseCallback, this);
-}
-
-void MavlinkGpsPublisherPlugin::Update(const UpdateInfo &info, EntityComponentManager &ecm)
-{
+    gzmsg << "[MavlinkGpsPublisherPlugin] Configure started." << std::endl;
+    this->_node.Subscribe("/stand/gps", &MavlinkGpsPublisherPlugin::gpsCallback, this);
+    this->_node.Subscribe("/model/stand/pose", &MavlinkGpsPublisherPlugin::poseCallback, this);
 }
 
 void MavlinkGpsPublisherPlugin::gpsCallback(const gz::msgs::NavSat &_msg)
 {
-    // std::cout << "[MavlinkGpsPublisherPlugin] GPS Callback: "
-    //           << "Latitude: " << _msg.latitude_deg()
-    //           << ", Longitude: " << _msg.longitude_deg()
-    //           << ", Altitude: " << _msg.altitude() << std::endl;
+    _gps2_raw.lat = static_cast<int32_t>(_msg.latitude_deg() * 1e7);
+    _gps2_raw.lon = static_cast<int32_t>(_msg.longitude_deg() * 1e7);
+    _gps2_raw.alt = static_cast<int32_t>(_msg.altitude() * 1e3); 
+
+    mavlink_message_t msg;
+    mavlink_msg_gps2_raw_encode(system_id, component_id, &msg, &_gps2_raw); 
+    sendMessage(msg);
 }
 void MavlinkGpsPublisherPlugin::poseCallback(const gz::msgs::Pose_V &_msg)
 {
@@ -46,30 +47,34 @@ void MavlinkGpsPublisherPlugin::poseCallback(const gz::msgs::Pose_V &_msg)
         orientation.y(),
         orientation.z());
 
-    gz::math::Vector3d euler = quat.Euler();
+    gz::math::Vector3d euler = quat.Euler();    
+    _gps2_raw.yaw = static_cast<uint16_t>(RAD2DEG(euler.Z()) + 180.0); 
 
-    std::cout << std::fixed << std::setprecision(3);
-    std::cout << "  Position: (" << pos.x() << ", " << pos.y() << ", " << pos.z() << ")\n";
-    std::cout << "  Orientation (quaternion): ("
-              << orientation.x() << ", "
-              << orientation.y() << ", "
-              << orientation.z() << ", "
-              << orientation.w() << ")\n";
+}
 
-    double roll_deg = RAD2DEG(euler.X());
-    double pitch_deg = RAD2DEG(euler.Y());
-    double yaw_deg = RAD2DEG(euler.Z());
+bool MavlinkGpsPublisherPlugin::sendMessage(const mavlink_message_t& msg)
+{
+    uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+    uint16_t len = mavlink_msg_to_send_buffer(buffer, &msg);
 
-    std::cout << "  Orientation (Euler): "
-              << "roll=" << roll_deg << ", "
-              << "pitch=" << pitch_deg << ", "
-              << "yaw=" << yaw_deg << std::endl;
+    try {
+        if (_port->isOpenPort())
+        {
+            _port->writeData(buffer, len);
+            return true;
+        }
+
+        return false;
+    } catch (const std::exception& e) {
+        std::cerr << "Failed to send MAVLink message: " << e.what() << std::endl;
+        return false;
+    }
 }
 
 GZ_ADD_PLUGIN(
     mavlink_gps_plugin::MavlinkGpsPublisherPlugin,
     gz::sim::System,
-    mavlink_gps_plugin::MavlinkGpsPublisherPlugin::ISystemConfigure,
-    mavlink_gps_plugin::MavlinkGpsPublisherPlugin::ISystemUpdate)
+    mavlink_gps_plugin::MavlinkGpsPublisherPlugin::ISystemConfigure
+)
 
 GZ_ADD_PLUGIN_ALIAS(mavlink_gps_plugin::MavlinkGpsPublisherPlugin, "gz::sim::systems::MavlinkGpsPublisherPlugin")

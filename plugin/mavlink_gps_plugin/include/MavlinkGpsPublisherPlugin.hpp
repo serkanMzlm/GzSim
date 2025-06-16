@@ -16,14 +16,22 @@
 #include <gz/sim/components/Sensor.hh>
 #include <gz/sim/components/NavSat.hh>
 
+#include "udp.hpp"
+#include <mavlink/common/mavlink.h> 
+
 #define RAD2DEG(x) ((x) * 180.0 / M_PI)
 
 namespace mavlink_gps_plugin
 {
     class MavlinkGpsPublisherPlugin : public gz::sim::System,
-                                      public gz::sim::ISystemConfigure,
-                                      public gz::sim::ISystemUpdate
+                                      public gz::sim::ISystemConfigure
     {
+    public:
+        int local_port {5000};
+        int remote_port {5001};
+        uint8_t system_id {5};
+        uint8_t component_id {1};
+        std::string ip = "127.0.0.1";
     public:
         void Configure(
             const gz::sim::Entity &entity,
@@ -31,14 +39,15 @@ namespace mavlink_gps_plugin
             gz::sim::EntityComponentManager &ecm,
             gz::sim::EventManager &eventMgr) override;
 
-        void Update(const gz::sim::UpdateInfo &info, gz::sim::EntityComponentManager &ecm) override;
         void gpsCallback(const gz::msgs::NavSat &_msg);
         void poseCallback(const gz::msgs::Pose_V &_msg);
+        bool sendMessage(const mavlink_message_t& msg);
 
     private:
-        gz::transport::Node node_;
-        // gz::sim::Model model_;
-        // gz::sim::Entity stand_link_entity_ {gz::sim::kNullEntity};
+        std::unique_ptr<Udp> _port;
+        gz::transport::Node _node;
+
+        mavlink_gps2_raw_t _gps2_raw;
     };
 }
 

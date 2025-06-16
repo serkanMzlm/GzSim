@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 project(mavlink_gps_plugin)
 
+set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};$ENV{MAVLINK_PATH}")
+
+
+find_package(MAVLink REQUIRED)
 find_package(gz-cmake3 REQUIRED)
+
 set(GZ_DISTRIBUTION "Harmonic")
 
 gz_find_package(gz-sim8 REQUIRED)
@@ -18,6 +23,8 @@ set(GZ_MSGS_VER ${gz-msgs10_VERSION_MAJOR})
 include_directories(include)
 add_library(MavlinkGpsPublisherPlugin SHARED
   src/MavlinkGpsPublisherPlugin.cpp
+  src/udp.cpp
+  include/udp.hpp
 )
 
 target_link_libraries(MavlinkGpsPublisherPlugin
@@ -25,6 +32,8 @@ target_link_libraries(MavlinkGpsPublisherPlugin
   gz-sim${GZ_SIM_VER}::gz-sim${GZ_SIM_VER}
   gz-transport${GZ_TRANSPORT_VER}::gz-transport${GZ_TRANSPORT_VER}
   gz-transport${GZ_TRANSPORT_VER}::core
+
+  MAVLink::mavlink
 )
 
 install(TARGETS MavlinkGpsPublisherPlugin DESTINATION lib)
