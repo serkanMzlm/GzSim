@@ -2,6 +2,7 @@
 
 ```
 GZ_SIM_RESOURCE_PATH
+GZ_SIM_SYSTEM_PLUGIN_PATH
 ```
 
 - https://app.gazebosim.org/home

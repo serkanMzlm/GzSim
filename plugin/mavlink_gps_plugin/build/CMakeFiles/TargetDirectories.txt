@@ -1,0 +1,7 @@
+/home/serkan/.local/GzSim/plugin/mavlink_gps_plugin/build/CMakeFiles/MavlinkGpsPublisherPlugin.dir
+/home/serkan/.local/GzSim/plugin/mavlink_gps_plugin/build/CMakeFiles/edit_cache.dir
+/home/serkan/.local/GzSim/plugin/mavlink_gps_plugin/build/CMakeFiles/rebuild_cache.dir
+/home/serkan/.local/GzSim/plugin/mavlink_gps_plugin/build/CMakeFiles/list_install_components.dir
+/home/serkan/.local/GzSim/plugin/mavlink_gps_plugin/build/CMakeFiles/install.dir
+/home/serkan/.local/GzSim/plugin/mavlink_gps_plugin/build/CMakeFiles/install/local.dir
+/home/serkan/.local/GzSim/plugin/mavlink_gps_plugin/build/CMakeFiles/install/strip.dir

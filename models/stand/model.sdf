@@ -1,0 +1,77 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name="stand">
+    <link name="stand_link">
+      <inertial>
+        <mass>2.0</mass>
+        <inertia>
+          <ixx>0.2</ixx>
+          <iyy>0.2</iyy>
+          <izz>0.2</izz>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+        </inertia>
+      </inertial>
+      <visual name="stand_visual">
+        <geometry>
+          <mesh>
+            <uri>meshes/conveyor_block_visual.glb</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="stand_box">
+        <pose>0.0 0.0 0.251262 0.0 0.0 0.0</pose>
+        <geometry>
+          <box>
+            <size>0.501994 0.505 0.504526</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="gps_link">
+      <inertial>
+        <mass>0.1</mass>
+        <inertia>
+          <ixx>0.0001</ixx>
+          <iyy>0.0001</iyy>
+          <izz>0.0001</izz>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyz>0.0</iyz>
+        </inertia>
+      </inertial>
+      <pose>0 0.3 0.5 0 0 0</pose>
+      <sensor name="navsat_sensor" type="navsat">
+        <always_on>1</always_on>
+        <update_rate>10</update_rate>
+        <topic>/stand/gps</topic>
+      </sensor>
+      <visual name="gps_visual">
+        <geometry>
+          <cylinder>
+            <radius>0.05</radius>
+            <length>0.02</length>
+          </cylinder>
+        </geometry>
+        <material>
+          <ambient>0.01 0.01 0.01 1</ambient>
+          <diffuse>0.01 0.01 0.01 1</diffuse>
+          <emissive>0.01 0.01 0.01 1</emissive>
+          <specular>0.2 0.2 0.2 1</specular>
+        </material>
+      </visual>
+    </link>
+
+    <joint name="stand_joint" type="fixed">
+      <parent>stand_link</parent>
+      <child>gps_link</child>
+    </joint>
+
+    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+      <dimensions>3</dimensions>
+      <odom_publish_frequency>10</odom_publish_frequency>
+    </plugin>
+  </model>
+</sdf>
