@@ -48,6 +48,7 @@ namespace mavlink_gps_plugin
         gz::transport::Node _node;
 
         mavlink_gps2_raw_t _gps2_raw;
+        uint16_t _yaw;
     };
 }
 

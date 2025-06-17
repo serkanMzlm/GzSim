@@ -30,7 +30,7 @@ void MavlinkGpsPublisherPlugin::gpsCallback(const gz::msgs::NavSat &_msg)
     _gps2_raw.lat = static_cast<int32_t>(_msg.latitude_deg() * 1e7);
     _gps2_raw.lon = static_cast<int32_t>(_msg.longitude_deg() * 1e7);
     _gps2_raw.alt = static_cast<int32_t>(_msg.altitude() * 1e3); 
-
+    _gps2_raw.yaw = _yaw; 
     mavlink_message_t msg;
     mavlink_msg_gps2_raw_encode(system_id, component_id, &msg, &_gps2_raw); 
     sendMessage(msg);
@@ -48,7 +48,7 @@ void MavlinkGpsPublisherPlugin::poseCallback(const gz::msgs::Pose_V &_msg)
         orientation.z());
 
     gz::math::Vector3d euler = quat.Euler();    
-    _gps2_raw.yaw = static_cast<uint16_t>(RAD2DEG(euler.Z()) + 180.0); 
+    _yaw = static_cast<uint16_t>(RAD2DEG(euler.Z()) + 180.0); 
 
 }
 
