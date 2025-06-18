@@ -22,8 +22,8 @@ void MavlinkGpsPublisherPlugin::Configure(
 
     gzmsg << "[MavlinkGpsPublisherPlugin] Configure started." << std::endl;
     this->_node.Subscribe("/stand/gps", &MavlinkGpsPublisherPlugin::gpsCallback, this);
-    // this->_node.Subscribe("/model/stand/pose", &MavlinkGpsPublisherPlugin::poseCallback, this);
-    this->_node.Subscribe("/model/target_start/pose", &MavlinkGpsPublisherPlugin::poseCallback, this);
+    // this->_node.Subscribe("/model/target_start/pose", &MavlinkGpsPublisherPlugin::poseCallback, this);
+    this->_node.Subscribe("/stand/magnetometer", &MavlinkGpsPublisherPlugin::magCallback, this);
 }
 
 void MavlinkGpsPublisherPlugin::gpsCallback(const gz::msgs::NavSat &_msg)
@@ -36,22 +36,38 @@ void MavlinkGpsPublisherPlugin::gpsCallback(const gz::msgs::NavSat &_msg)
     mavlink_msg_gps2_raw_encode(system_id, component_id, &msg, &_gps2_raw); 
     sendMessage(msg);
 }
-void MavlinkGpsPublisherPlugin::poseCallback(const gz::msgs::Pose_V &_msg)
+// void MavlinkGpsPublisherPlugin::poseCallback(const gz::msgs::Pose_V &_msg)
+// {
+//     const auto &pose = _msg.pose(0);
+//     const auto &pos = pose.position();
+//     const auto &orientation = pose.orientation();
+
+//     gz::math::Quaterniond quat(
+//         orientation.w(),
+//         orientation.x(),
+//         orientation.y(),
+//         orientation.z());
+
+//     gz::math::Vector3d euler = quat.Euler();    
+//     _yaw = static_cast<uint16_t>(RAD2DEG(euler.Z()) + 180.0); 
+
+// }
+
+void MavlinkGpsPublisherPlugin::magCallback(const gz::msgs::Magnetometer &_msg)
 {
-    const auto &pose = _msg.pose(0);
-    const auto &pos = pose.position();
-    const auto &orientation = pose.orientation();
-
-    gz::math::Quaterniond quat(
-        orientation.w(),
-        orientation.x(),
-        orientation.y(),
-        orientation.z());
-
-    gz::math::Vector3d euler = quat.Euler();    
-    _yaw = static_cast<uint16_t>(RAD2DEG(euler.Z()) + 180.0); 
-
+    double mag_x = _msg.field_tesla().x();
+    double mag_y = _msg.field_tesla().y();
+    double mag_z = _msg.field_tesla().z();
+    double yaw_rad = atan2(mag_y, mag_x);
+    double yaw_deg = (yaw_rad * 180.0 / M_PI) - 5;
+    if (yaw_deg < 0) {
+        yaw_deg += 360; 
+    }
+    _yaw = static_cast<uint16_t>(yaw_deg);
+    // std::cout << std::fixed << std::setprecision(2)
+            //   << "Magnetometer Yaw: " << yaw_deg << " degrees" << std::endl;
 }
+
 
 bool MavlinkGpsPublisherPlugin::sendMessage(const mavlink_message_t& msg)
 {

@@ -87,7 +87,7 @@ void CreateModelPlugin::handleMavlinkMessage(const mavlink_message_t &msg)
 void CreateModelPlugin::init()
 {
     findModelPath();
-    world_name = "test";
+    world_name = "terrain";
     model_file = target_path.string() + "/model.sdf";
 
     model_pose = {0.0, 20.0, 0.0};

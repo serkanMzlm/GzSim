@@ -5,6 +5,7 @@
 
 #include <gz/msgs/navsat.pb.h>
 #include <gz/msgs/pose_v.pb.h>
+#include <gz/msgs/magnetometer.pb.h>
 
 #include <gz/plugin/Register.hh>
 
@@ -38,9 +39,9 @@ namespace mavlink_gps_plugin
             const std::shared_ptr<const sdf::Element> &sdf,
             gz::sim::EntityComponentManager &ecm,
             gz::sim::EventManager &eventMgr) override;
-
         void gpsCallback(const gz::msgs::NavSat &_msg);
-        void poseCallback(const gz::msgs::Pose_V &_msg);
+        // void poseCallback(const gz::msgs::Pose_V &_msg);
+        void magCallback(const gz::msgs::Magnetometer &_msg);
         bool sendMessage(const mavlink_message_t& msg);
 
     private:
