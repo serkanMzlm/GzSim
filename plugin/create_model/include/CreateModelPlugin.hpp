@@ -30,7 +30,8 @@
 namespace create_model
 {
     class CreateModelPlugin : public gz::sim::System,
-                              public gz::sim::ISystemConfigure
+                              public gz::sim::ISystemConfigure,
+                              public gz::sim::ISystemUpdate
     {
     public:
         void Configure(
@@ -38,11 +39,16 @@ namespace create_model
             const std::shared_ptr<const sdf::Element> &sdf,
             gz::sim::EntityComponentManager &ecm,
             gz::sim::EventManager &eventMgr) override;
+        
+        void Update(
+            const gz::sim::UpdateInfo &info,
+            gz::sim::EntityComponentManager &ecm) override;
 
         void init();
         void findModelPath();
         void createModel();
         void setModelPose(const std::vector<double> &pose);
+        void handleMavlinkMessage(const mavlink_message_t &msg);
 
     private:
         std::unique_ptr<Udp> _port;
@@ -64,6 +70,11 @@ namespace create_model
 
         std::filesystem::path file_path;
         std::filesystem::path target_path;
+
+        std::chrono::steady_clock::time_point lastUpdateTime;
+        std::chrono::milliseconds updateInterval{100};
+
+        bool create_model{false};
     };
 }
 #endif

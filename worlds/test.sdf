@@ -199,8 +199,6 @@
       <uri>model://target_start</uri>
       <plugin filename="MavlinkGpsPublisherPlugin"
         name="gz::sim::systems::MavlinkGpsPublisherPlugin" />
-      <plugin filename="CreateModelPlugin"
-        name="gz::sim::systems::CreateModelPlugin" />
     </include>
 
     <model name="ground_plane">

@@ -14,11 +14,76 @@ void CreateModelPlugin::Configure(
     _port = std::make_unique<Udp>(local_port, ip, remote_port);
     _port->openPort();
 
-    if (!_port->isOpenPort()) {
+    if (!_port->isOpenPort())
+    {
         std::cerr << "Failed to open MAVLink sender port" << std::endl;
     }
 
     init();
+}
+
+void CreateModelPlugin::Update(const gz::sim::UpdateInfo &info,
+                               gz::sim::EntityComponentManager &ecm)
+{
+    static gz::sim::Entity modelEntity = gz::sim::kNullEntity;
+
+    auto now = std::chrono::steady_clock::now();
+    if ((now - lastUpdateTime) < updateInterval)
+        return;
+
+    lastUpdateTime = now;
+    try
+    {
+        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+        mavlink_message_t msg;
+        mavlink_status_t status;
+
+        int bytes_received = _port->readData(buffer, sizeof(buffer));
+        if (bytes_received > 0)
+        {
+            for (int i = 0; i < bytes_received; ++i)
+            {
+                if (mavlink_parse_char(MAVLINK_COMM_0, buffer[i], &msg, &status))
+                {
+                    handleMavlinkMessage(msg);
+                }
+            }
+        }
+        if (create_model)
+        {
+            createModel();
+            create_model = false;
+        }
+    }
+    catch (const std::system_error &e)
+    {
+        std::cerr << "[EXCEPTION] readData failed: " << e.what() << std::endl;
+    }
+}
+
+void CreateModelPlugin::handleMavlinkMessage(const mavlink_message_t &msg)
+{
+    switch (msg.msgid)
+    {
+    case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
+    {
+        mavlink_local_position_ned_t lp;
+        mavlink_msg_local_position_ned_decode(&msg, &lp);
+        std::cout << "[RECV] LOCAL_POSITION_NED | X: " << lp.x
+                  << " Y: " << lp.y
+                  << " Z: " << lp.z
+                  << " Vx: " << lp.vx
+                  << " Vy: " << lp.vy
+                  << " Vz: " << lp.vz << std::endl;
+        model_pose[0] = lp.x;
+        model_pose[1] = lp.y;
+        create_model = true;
+        break;
+    }
+    default:
+        std::cout << "[RECV] Unknown message ID: " << msg.msgid
+                  << " from SysID: " << (int)msg.sysid << std::endl;
+    }
 }
 
 void CreateModelPlugin::init()
@@ -34,8 +99,6 @@ void CreateModelPlugin::init()
     model_quaternion[3] = 0.0; // z
 
     model_euler = {0.0, 0.0, 0.0};
-
-    createModel();
 }
 
 void CreateModelPlugin::findModelPath()
@@ -47,6 +110,14 @@ void CreateModelPlugin::findModelPath()
 
 void CreateModelPlugin::createModel()
 {
+    static bool first_call = true;
+
+    if (!first_call)
+    {
+        return;
+    }
+
+    first_call = false;
     gz::msgs::EntityFactory req{};
     req.set_sdf_filename(model_file);
     req.set_name(model_name);
@@ -63,7 +134,7 @@ void CreateModelPlugin::createModel()
 
     gz::msgs::Boolean rep;
     std::string create_service = "/world/" + world_name + "/create";
-    
+
     bool result;
     bool gz_called = true;
 
@@ -91,7 +162,8 @@ void CreateModelPlugin::createModel()
 
 void CreateModelPlugin::setModelPose(const std::vector<double> &pose)
 {
-    if (pose.size() != 3) {
+    if (pose.size() != 3)
+    {
         std::cerr << "Invalid pose size. Expected 3 values." << std::endl;
         return;
     }
@@ -106,7 +178,7 @@ void CreateModelPlugin::setModelPose(const std::vector<double> &pose)
 GZ_ADD_PLUGIN(
     create_model::CreateModelPlugin,
     gz::sim::System,
-    create_model::CreateModelPlugin::ISystemConfigure
-)
+    create_model::CreateModelPlugin::ISystemConfigure,
+    create_model::CreateModelPlugin::ISystemUpdate)
 
 GZ_ADD_PLUGIN_ALIAS(create_model::CreateModelPlugin, "gz::sim::systems::CreateModelPlugin")
