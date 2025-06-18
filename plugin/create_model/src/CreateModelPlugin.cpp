@@ -20,18 +20,16 @@ void CreateModelPlugin::Configure(
     }
 
     init();
+    this->_node.Subscribe("/stand/gps", &CreateModelPlugin::gpsCallback, this);
 }
 
-void CreateModelPlugin::Update(const gz::sim::UpdateInfo &info,
-                               gz::sim::EntityComponentManager &ecm)
+void CreateModelPlugin::gpsCallback(const gz::msgs::NavSat &_msg)
 {
-    static gz::sim::Entity modelEntity = gz::sim::kNullEntity;
+    cb();
+}
 
-    auto now = std::chrono::steady_clock::now();
-    if ((now - lastUpdateTime) < updateInterval)
-        return;
-
-    lastUpdateTime = now;
+void CreateModelPlugin::cb()
+{
     try
     {
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
@@ -97,8 +95,6 @@ void CreateModelPlugin::init()
     model_quaternion[1] = 0.0; // x
     model_quaternion[2] = 0.0; // y
     model_quaternion[3] = 0.0; // z
-
-    model_euler = {0.0, 0.0, 0.0};
 }
 
 void CreateModelPlugin::findModelPath()
@@ -178,7 +174,7 @@ void CreateModelPlugin::setModelPose(const std::vector<double> &pose)
 GZ_ADD_PLUGIN(
     create_model::CreateModelPlugin,
     gz::sim::System,
-    create_model::CreateModelPlugin::ISystemConfigure,
-    create_model::CreateModelPlugin::ISystemUpdate)
+    create_model::CreateModelPlugin::ISystemConfigure
+)
 
 GZ_ADD_PLUGIN_ALIAS(create_model::CreateModelPlugin, "gz::sim::systems::CreateModelPlugin")

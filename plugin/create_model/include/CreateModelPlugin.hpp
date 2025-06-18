@@ -30,8 +30,7 @@
 namespace create_model
 {
     class CreateModelPlugin : public gz::sim::System,
-                              public gz::sim::ISystemConfigure,
-                              public gz::sim::ISystemUpdate
+                              public gz::sim::ISystemConfigure
     {
     public:
         void Configure(
@@ -40,18 +39,17 @@ namespace create_model
             gz::sim::EntityComponentManager &ecm,
             gz::sim::EventManager &eventMgr) override;
         
-        void Update(
-            const gz::sim::UpdateInfo &info,
-            gz::sim::EntityComponentManager &ecm) override;
-
         void init();
         void findModelPath();
         void createModel();
         void setModelPose(const std::vector<double> &pose);
         void handleMavlinkMessage(const mavlink_message_t &msg);
+        void cb();
+        void gpsCallback(const gz::msgs::NavSat &_msg);
 
     private:
         std::unique_ptr<Udp> _port;
+        gz::transport::Node _node;
 
         int local_port{5010};
         int remote_port{5011};
@@ -59,20 +57,15 @@ namespace create_model
         uint8_t component_id{1};
         std::string ip = "127.0.0.1";
 
-        gz::transport::Node _node;
         std::string world_name;
         std::string model_name = "target_stop";
         std::string model_file;
 
         std::vector<double> model_pose;
         double model_quaternion[4];
-        std::vector<double> model_euler;
 
         std::filesystem::path file_path;
         std::filesystem::path target_path;
-
-        std::chrono::steady_clock::time_point lastUpdateTime;
-        std::chrono::milliseconds updateInterval{100};
 
         bool create_model{false};
     };
