@@ -47,10 +47,10 @@ void CreateModelPlugin::cb()
                 }
             }
         }
-        if (create_model)
+        if (is_new_setpoint)
         {
             createModel();
-            create_model = false;
+            is_new_setpoint = false;
         }
     }
     catch (const std::system_error &e)
@@ -67,15 +67,15 @@ void CreateModelPlugin::handleMavlinkMessage(const mavlink_message_t &msg)
     {
         mavlink_local_position_ned_t lp;
         mavlink_msg_local_position_ned_decode(&msg, &lp);
-        std::cout << "[RECV] LOCAL_POSITION_NED | X: " << lp.x
-                  << " Y: " << lp.y
-                  << " Z: " << lp.z
-                  << " Vx: " << lp.vx
-                  << " Vy: " << lp.vy
-                  << " Vz: " << lp.vz << std::endl;
+        // std::cout << "[RECV] LOCAL_POSITION_NED | X: " << lp.x
+        //           << " Y: " << lp.y
+        //           << " Z: " << lp.z
+        //           << " Vx: " << lp.vx
+        //           << " Vy: " << lp.vy
+        //           << " Vz: " << lp.vz << std::endl;
         model_pose[0] = lp.x;
         model_pose[1] = lp.y;
-        create_model = true;
+        is_new_setpoint = true;
         break;
     }
     default:
@@ -106,14 +106,14 @@ void CreateModelPlugin::findModelPath()
 
 void CreateModelPlugin::createModel()
 {
-    static bool first_call = true;
-
-    if (!first_call)
+    static bool is_create_model = false;
+    if (is_create_model)
     {
+        changeModelPose();
         return;
     }
 
-    first_call = false;
+    is_create_model = true;
     gz::msgs::EntityFactory req{};
     req.set_sdf_filename(model_file);
     req.set_name(model_name);
@@ -156,6 +156,28 @@ void CreateModelPlugin::createModel()
     }
 }
 
+void CreateModelPlugin::changeModelPose()
+{
+    gz::msgs::Pose req;
+    req.set_name(model_name);
+    req.mutable_position()->set_x(model_pose[0]);
+    req.mutable_position()->set_y(model_pose[1]);
+    req.mutable_position()->set_z(model_pose[2]);
+    req.mutable_orientation()->set_w(model_quaternion[0]);
+    req.mutable_orientation()->set_x(model_quaternion[1]);
+    req.mutable_orientation()->set_y(model_quaternion[2]);
+    req.mutable_orientation()->set_z(model_quaternion[3]);
+
+    gz::msgs::Boolean rep;
+    bool result;
+    std::string service = "/world/" + world_name + "/set_pose";
+
+    if (!_node.Request(service, req, 1000, rep, result) || !result || !rep.data())
+    {
+        std::cerr << "Failed to set model pose\n";
+    }
+}
+
 void CreateModelPlugin::setModelPose(const std::vector<double> &pose)
 {
     if (pose.size() != 3)
@@ -174,7 +196,6 @@ void CreateModelPlugin::setModelPose(const std::vector<double> &pose)
 GZ_ADD_PLUGIN(
     create_model::CreateModelPlugin,
     gz::sim::System,
-    create_model::CreateModelPlugin::ISystemConfigure
-)
+    create_model::CreateModelPlugin::ISystemConfigure)
 
 GZ_ADD_PLUGIN_ALIAS(create_model::CreateModelPlugin, "gz::sim::systems::CreateModelPlugin")

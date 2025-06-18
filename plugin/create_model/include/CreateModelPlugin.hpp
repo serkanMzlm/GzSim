@@ -42,6 +42,7 @@ namespace create_model
         void init();
         void findModelPath();
         void createModel();
+        void changeModelPose();
         void setModelPose(const std::vector<double> &pose);
         void handleMavlinkMessage(const mavlink_message_t &msg);
         void cb();
@@ -67,7 +68,7 @@ namespace create_model
         std::filesystem::path file_path;
         std::filesystem::path target_path;
 
-        bool create_model{false};
+        bool is_new_setpoint{false};
     };
 }
 #endif
