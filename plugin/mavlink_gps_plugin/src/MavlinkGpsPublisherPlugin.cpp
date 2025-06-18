@@ -22,7 +22,8 @@ void MavlinkGpsPublisherPlugin::Configure(
 
     gzmsg << "[MavlinkGpsPublisherPlugin] Configure started." << std::endl;
     this->_node.Subscribe("/stand/gps", &MavlinkGpsPublisherPlugin::gpsCallback, this);
-    this->_node.Subscribe("/model/stand/pose", &MavlinkGpsPublisherPlugin::poseCallback, this);
+    // this->_node.Subscribe("/model/stand/pose", &MavlinkGpsPublisherPlugin::poseCallback, this);
+    this->_node.Subscribe("/model/target_start/pose", &MavlinkGpsPublisherPlugin::poseCallback, this);
 }
 
 void MavlinkGpsPublisherPlugin::gpsCallback(const gz::msgs::NavSat &_msg)

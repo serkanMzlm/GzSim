@@ -183,10 +183,24 @@
       <shadows>true</shadows>
     </scene>
 
-    <include>
+    <!-- <include>
       <uri>model://stand</uri>
       <plugin filename="MavlinkGpsPublisherPlugin"
         name="gz::sim::systems::MavlinkGpsPublisherPlugin" />
+    </include> -->
+
+    <!-- <include>
+      <pose>0 2 0.5 0 0 0</pose>
+      <uri>model://target_stop</uri>
+    </include> -->
+    
+    <include>
+      <pose>8 2 0.5 0 0 0</pose>
+      <uri>model://target_start</uri>
+      <plugin filename="MavlinkGpsPublisherPlugin"
+        name="gz::sim::systems::MavlinkGpsPublisherPlugin" />
+      <plugin filename="CreateModelPlugin"
+        name="gz::sim::systems::CreateModelPlugin" />
     </include>
 
     <model name="ground_plane">
@@ -241,7 +255,7 @@
 
     <include>
       <static>1</static>
-      <pose>0 0 0.5 0 0 0</pose>
+      <pose>0 0 1 0 0 0</pose>
       <uri>model://axes</uri>
     </include>
 
